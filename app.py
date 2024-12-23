@@ -4,24 +4,21 @@ import joblib
 import unicodedata
 import indicnlp.tokenize.indic_tokenize as indic_tokenize
 import numpy as np
+import os  # Added to handle dynamic port
 
 app = Flask(__name__)
 
 # Load models and vectorizers for all languages using joblib
-try:
-    MODELS = {
-        "english": {
-            "model": joblib.load("sentiment_analysis_model_eng.pkl"),
-            "vectorizer": joblib.load("tfidf_vectorizer_eng.pkl")
-        },
-        "hindi": {
-            "model": joblib.load("xgb_model_hin.pkl"),
-            "vectorizer": joblib.load("tfidf_vectorizer_hin.pkl")
-        }
+MODELS = {
+    "english": {
+        "model": joblib.load("sentiment_analysis_model_eng.pkl"),
+        "vectorizer": joblib.load("tfidf_vectorizer_eng.pkl")
+    },
+    "hindi": {
+        "model": joblib.load("xgb_model_hin.pkl"),
+        "vectorizer": joblib.load("tfidf_vectorizer_hin.pkl")
     }
-except FileNotFoundError as e:
-    print(f"Error loading model or vectorizer: {e}")
-    MODELS = {}
+}
 
 # Sentiment mapping
 sentiment_mapping = {0: 'Negative', 1: 'Positive', 2: 'Neutral'}
@@ -49,18 +46,14 @@ def clean_text(text, language="english"):
 
 def preprocess_text(text, language):
     """Advanced preprocessing based on language."""
-    try:
-        if language == "hindi":
-            text = re.sub(r"[^\u0900-\u097F\s]", '', text)  # Keep only Hindi characters
-            text = clean_text(text, language)
-            text = ' '.join(indic_tokenize.trivial_tokenize(text))  # Tokenize using Indic NLP
-        else:
-            text = clean_text(text, language)  # Default preprocessing for English
-        print(f"Preprocessed text ({language}): {text}")
-        return text
-    except Exception as e:
-        print(f"Error in preprocessing: {e}")
-        return ""
+    if language == "hindi":
+        text = re.sub(r"[^\u0900-\u097F\s]", '', text)  # Keep only Hindi characters
+        text = clean_text(text, language)
+        text = ' '.join(indic_tokenize.trivial_tokenize(text))  # Tokenize using Indic NLP
+    else:
+        text = clean_text(text, language)  # Default preprocessing for English
+
+    return text
 
 def predict_sentiment(text, language):
     """Predict sentiment for the given text and language."""
@@ -86,12 +79,8 @@ def predict_sentiment(text, language):
             'Positive': round(float(probabilities[-1]) * 100, 2)
         }
 
-        print(f"Prediction: {sentiment}, Probabilities: {probability_dict}")
         return sentiment, probability_dict
-    except KeyError as e:
-        return f"Model or vectorizer not found for {language}: {str(e)}", None
     except Exception as e:
-        print(f"Error in prediction: {e}")
         return f"Error: {str(e)}", None
 
 @app.route('/')
@@ -123,8 +112,9 @@ def predict():
         })
 
     except Exception as e:
-        print(f"Error in /predict route: {e}")
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Fetch PORT from environment or default to 5000
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=True)
