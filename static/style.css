@@ -1,0 +1,138 @@
+/* General Styles */
+body {
+  margin: 0;
+  font-family: 'Arial', sans-serif;
+  background: linear-gradient(
+    to bottom right, 
+    rgba(144, 116, 116, 0.8), 
+    rgba(13, 57, 57, 0.8)
+  );
+  color: #fdfdfd;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+/* Container Styling */
+.container {
+  max-width: 800px;
+  width: 100%;
+  margin: 20px auto;
+  padding: 50px;
+  background: linear-gradient(145deg, #304699, #1b1a1a);
+  border-radius: 20px;
+  box-shadow: 0px 6px 15px rgba(0, 0, 0, 0.8);
+  transition: transform 0.3s ease-in-out;
+}
+
+.container:hover {
+  transform: scale(1.02);
+}
+
+/* Header styles */
+h1 {
+  text-align: center;
+  color: #5d94f4;
+  font-size: 2rem;
+  margin-bottom: 20px;
+}
+
+/* Language Selection Dropdown */
+.language-selection {
+  margin-bottom: 20px;
+}
+
+.language-selection label {
+  font-size: 1.1rem;
+  margin-right: 10px;
+}
+
+select {
+  width: 100%;
+  padding: 10px;
+  border-radius: 4px;
+  border: 1px solid #b1ddf6;
+  font-size: 1rem;
+  margin-bottom: 20px;
+  outline: none;
+}
+
+/* Textarea for the review input */
+textarea {
+  width: 100%;
+  height: 150px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+  background: #595858;
+  color: #ffffff;
+  margin-bottom: 20px;
+  resize: vertical;
+  outline: none;
+}
+
+/* Focus effect on the textarea */
+textarea:focus {
+  border-color: #3a7097;
+  box-shadow: 0 0 5px rgba(159, 162, 164, 0.5);
+}
+
+/* Button Styling */
+button {
+  width: 100%;
+  padding: 15px;        
+  font-size: 1.3rem;
+  background: #1b7be2;
+  border: none;
+  border-radius: 10px;
+  color: #040404;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+button:hover {
+  background-color: #77b6f6;
+  transform: translateY(-2px);
+}
+
+button:active {
+  transform: translateY(0);
+  background-color: #38240b;
+}
+
+/* Styling for the result */
+.result {
+  margin-top: 20px;
+  padding: 15px;
+  border-radius: 4px;
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+
+.result.success {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.result.error {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+/* Probability list styles */
+ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+ul li {
+  margin-bottom: 10px;
+}
+
+/* Hidden class for initial hiding of the result */
+.hidden {
+  display: none;
+}
+
