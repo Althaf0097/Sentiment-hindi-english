@@ -5,7 +5,8 @@ import unicodedata
 import indicnlp.tokenize.indic_tokenize as indic_tokenize
 import langid
 import numpy as np
-import os
+import os  # For fetching environment variables like PORT
+
 app = Flask(__name__)
 
 # Load models and vectorizers for all languages
