@@ -3,25 +3,25 @@ import re
 import joblib
 import unicodedata
 import indicnlp.tokenize.indic_tokenize as indic_tokenize
+import langid
 import numpy as np
-import os  # Added to handle dynamic port
 
 app = Flask(__name__)
 
-# Load models and vectorizers for all languages using joblib
+# Load models and vectorizers for all languages
 MODELS = {
     "english": {
         "model": joblib.load("sentiment_analysis_model_eng.pkl"),
-        "vectorizer": joblib.load("tfidf_vectorizer_eng.pkl")
+        "vectorizer": joblib.load("tfidf_vectorizer_eng.pkl"),
     },
     "hindi": {
         "model": joblib.load("xgb_model_hin.pkl"),
-        "vectorizer": joblib.load("tfidf_vectorizer_hin.pkl")
-    }
+        "vectorizer": joblib.load("tfidf_vectorizer_hin.pkl"),
+    },
 }
 
 # Sentiment mapping
-sentiment_mapping = {0: 'Negative', 1: 'Positive', 2: 'Neutral'}
+sentiment_mapping = {0: "Negative", 1: "Positive", 2: "Neutral"}
 
 # Stopwords for Hindi
 manual_hindi_stopwords = {
@@ -33,10 +33,10 @@ manual_hindi_stopwords = {
 # Preprocessing functions
 def clean_text(text, language="english"):
     """Basic text cleaning and stopword removal."""
-    text = re.sub(r"http\S+|www\S+|https\S+", '', text, flags=re.MULTILINE)
-    text = re.sub(r"\s+", ' ', text).strip()
-    text = re.sub(r"\d+", '', text)
-    text = re.sub(r"[^\w\s]", '', text)
+    text = re.sub(r"http\S+|www\S+|https\S+", "", text, flags=re.MULTILINE)
+    text = re.sub(r"\s+", " ", text).strip()
+    text = re.sub(r"\d+", "", text)
+    text = re.sub(r"[^\w\s]", "", text)
     text = text.lower()
 
     if language == "hindi":
@@ -47,9 +47,9 @@ def clean_text(text, language="english"):
 def preprocess_text(text, language):
     """Advanced preprocessing based on language."""
     if language == "hindi":
-        text = re.sub(r"[^\u0900-\u097F\s]", '', text)  # Keep only Hindi characters
+        text = re.sub(r"[^\u0900-\u097F\s]", "", text)  # Keep only Hindi characters
         text = clean_text(text, language)
-        text = ' '.join(indic_tokenize.trivial_tokenize(text))  # Tokenize using Indic NLP
+        text = " ".join(indic_tokenize.trivial_tokenize(text))  # Tokenize using Indic NLP
     else:
         text = clean_text(text, language)  # Default preprocessing for English
 
@@ -72,22 +72,39 @@ def predict_sentiment(text, language):
         prediction = model.predict(text_vectorized)[0]
         probabilities = model.predict_proba(text_vectorized)[0]
 
-        sentiment = sentiment_mapping.get(prediction, 'Unknown')
+        result = sentiment_mapping.get(prediction, "Unknown")
         probability_dict = {
-            'Negative': round(float(probabilities[0]) * 100, 2),
-            'Neutral': round(float(probabilities[1]) * 100, 2) if len(probabilities) > 2 else None,
-            'Positive': round(float(probabilities[-1]) * 100, 2)
+            "Negative": round(float(probabilities[0]) * 100, 2),
+            "Positive": round(float(probabilities[1]) * 100, 2) if len(probabilities) > 2 else None,
+            "Neutral": round(float(probabilities[-1]) * 100, 2),
         }
 
-        return sentiment, probability_dict
+        return result, probability_dict
     except Exception as e:
         return f"Error: {str(e)}", None
 
-@app.route('/')
-def home():
-    return render_template('index.html')
+def is_language_valid_alt(text, language):
+    """
+    Alternative implementation using langid library.
+    """
+    if not text.strip():
+        print("Error: Text is empty or whitespace.")
+        return False
 
-@app.route('/predict', methods=['POST'])
+    detected_language, confidence = langid.classify(text)
+    print(f"Detected language: {detected_language}, Confidence: {confidence}")
+
+    if language.lower() == "hindi" and detected_language != "hi":
+        return False
+    elif language.lower() == "english" and detected_language != "en":
+        return False
+    return True
+
+@app.route("/")
+def home():
+    return render_template("index.html")
+
+@app.route("/predict", methods=["POST"])
 def predict():
     try:
         data = request.form
@@ -100,21 +117,23 @@ def predict():
         if language not in MODELS:
             return jsonify({"error": "Unsupported language"}), 400
 
+        # Validate text language
+        if not is_language_valid_alt(text, language):
+            return jsonify({"error": f"Input text does not match the selected language ({language})."}), 400
+
         # Predict sentiment for the review text
-        sentiment, probabilities = predict_sentiment(text, language)
+        result, probabilities = predict_sentiment(text, language)
 
         if probabilities is None:
             return jsonify({"error": "Error in prediction"}), 500
 
         return jsonify({
-            "sentiment": sentiment,
-            "probabilities": probabilities
+            "sentiment": result,
+            "probabilities": probabilities,
         })
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-if __name__ == '__main__':
-    # Fetch PORT from environment or default to 5000
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=True)
+if __name__ == "__main__":
+    app.run(debug=True)
