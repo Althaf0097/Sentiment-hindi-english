@@ -8,21 +8,19 @@
 </head>
 <body>
   <div class="container">
-    <h1>Multilingual Sentiment Analysis</h1>
+    <h1>Sentiment Analysis Tool</h1>
 
     <!-- Language Selection Dropdown -->
     <div class="language-selection">
       <label for="language">Select Language:</label>
-      <select id="language" name="language" required>
-        <option value="default" selected>--</option>
+      <select id="language" name="language">
         <option value="english">English</option>
-        <option value="hindi">Hindi</option>
+        <option value="hindi">हिन्दी</option>
       </select>
     </div>
 
     <!-- Review Input Form -->
     <form id="sentiment-form">
-      <label for="review">Enter your review:</label>
       <textarea
         id="review"
         name="review"
@@ -37,19 +35,13 @@
   </div>
 
   <script>
+    // Handle form submission
     document
       .getElementById("sentiment-form")
       .addEventListener("submit", async function (event) {
         event.preventDefault();
-
         const review = document.getElementById("review").value;
         const language = document.getElementById("language").value;
-
-        // Validate language selection
-        if (language === "default") {
-          alert("Please select a language before submitting.");
-          return;
-        }
 
         const response = await fetch("/predict", {
           method: "POST",
@@ -61,39 +53,17 @@
         const data = await response.json();
 
         if (data.error) {
-          resultDiv.textContent = `Error: ${data.error}`;
+          resultDiv.textContent = data.error;
           resultDiv.className = "result error";
         } else {
-          let emoji = "";
-          if (data.sentiment === "Positive") emoji = "😊";
-          else if (data.sentiment === "Negative") emoji = "😢";
-          else if (data.sentiment === "Neutral") emoji = "😐";
-
           resultDiv.innerHTML = `
-            <h2>Sentiment: ${data.sentiment} ${emoji}</h2>
-            <div class="probabilities">
-              <h3>Probabilities:</h3>
-              ${Object.entries(data.probabilities)
-                .map(
-                  ([key, value]) => `
-                  <div class="probability">
-                    <span>${key}:</span>
-                    <div class="progress">
-                      <div
-                        class="progress-bar"
-                        style="width: ${value}%;"
-                        aria-valuenow="${value}"
-                        aria-valuemin="0"
-                        aria-valuemax="100"
-                      >
-                        ${value}%
-                      </div>
-                    </div>
-                  </div>
-                `
-                )
-                .join("")}
-            </div>
+            <p><strong>Predicted Sentiment:</strong> ${data.sentiment}</p>
+            <p><strong>Probabilities:</strong></p>
+            <ul>
+              <li><strong>Negative:</strong> ${data.probabilities.Negative}%</li>
+              <li><strong>Positive:</strong> ${data.probabilities.Neutral || 0}%</li>
+              <li><strong>Neutral:</strong> ${data.probabilities.Positive}%</li>
+            </ul>
           `;
           resultDiv.className = "result success";
         }
