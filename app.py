@@ -3,7 +3,6 @@ import re
 import joblib
 import unicodedata
 import indicnlp.tokenize.indic_tokenize as indic_tokenize
-import langid
 import numpy as np
 import os  # For fetching environment variables like PORT
 
